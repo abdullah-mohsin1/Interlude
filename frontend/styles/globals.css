@@ -1,0 +1,62 @@
+@import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Manrope:wght@400;500;600;700;800&display=swap");
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html,
+  body,
+  #__next {
+    height: 100%;
+  }
+
+  body {
+    @apply bg-spotify-bg text-zinc-100 antialiased;
+    background-image:
+      radial-gradient(circle at 15% -10%, rgba(30, 215, 96, 0.28), transparent 38%),
+      radial-gradient(circle at 85% -20%, rgba(32, 211, 151, 0.18), transparent 34%),
+      linear-gradient(180deg, #101010 0%, #070707 45%);
+    background-attachment: fixed;
+  }
+}
+
+@layer components {
+  .surface-card {
+    @apply rounded-2xl border border-white/10 bg-spotify-panel/95 shadow-panel backdrop-blur;
+  }
+
+  .section-label {
+    @apply text-xs font-semibold uppercase tracking-[0.15em] text-spotify-muted;
+  }
+}
+
+.spotify-range {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 4px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.2);
+  cursor: pointer;
+}
+
+.spotify-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #1db954;
+  border: 2px solid #f4fff7;
+  box-shadow: 0 0 0 4px rgba(29, 185, 84, 0.2);
+}
+
+.spotify-range::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #1db954;
+  border: 2px solid #f4fff7;
+  box-shadow: 0 0 0 4px rgba(29, 185, 84, 0.2);
+}
