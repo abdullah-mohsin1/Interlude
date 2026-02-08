@@ -1,12 +1,15 @@
 from __future__ import annotations
 
 import json
+import logging
+import traceback
 import uuid
 import os
 from pathlib import Path
 from typing import Any, Dict, List
 
 from fastapi import APIRouter, HTTPException
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 
 from backend.api.generate_ad import generate_lyrics_for_song
@@ -15,13 +18,23 @@ from backend.api.mix_audio import mix_song_with_insert
 from backend.services.audio_service import GENERATED_DIR, ORIGINALS_DIR
 from backend.services.gradium_service import generate_voice
 from backend.services.songify_service import songify_tts_to_singing
+from backend.utils.doctor import run_doctor
+from backend.utils.env import get_env, load_env
 from backend.utils.ffmpeg import assert_ffmpeg_available
+from backend.utils.paths import env_path
 
 ROOT_DIR = Path(__file__).resolve().parents[2]
 SONGS_CONFIG_PATH = ROOT_DIR / "backend" / "config" / "songs.json"
 PUBLIC_DIR = ROOT_DIR / "public"
 
 router = APIRouter(prefix="/api", tags=["interlude"])
+logger = logging.getLogger("interlude.api")
+
+
+class DoctorError(RuntimeError):
+    def __init__(self, message: str, report: dict):
+        super().__init__(message)
+        self.report = report
 
 
 class InsertWindow(BaseModel):
@@ -70,6 +83,60 @@ class SongifyResponse(BaseModel):
     meta: Dict[str, Any]
 
 
+def _next_steps_from_report(report: dict) -> List[str]:
+    steps: List[str] = []
+    load_env()
+    python_deps = report.get("python_deps", {})
+    if isinstance(python_deps, dict) and not all(python_deps.values()):
+        steps.append("Install Python deps: python -m pip install -r backend/requirements.txt")
+    if report.get("ffmpeg") is False:
+        steps.append("Install ffmpeg: brew install ffmpeg (macOS)")
+        steps.append("Install ffmpeg: sudo apt-get update && sudo apt-get install -y ffmpeg (Ubuntu/Debian)")
+    try:
+        get_env("GRADIUM_API_KEY", required=True)
+    except RuntimeError:
+        steps.append(
+            f"Set GRADIUM_API_KEY in {env_path().resolve()} or in your deployment environment."
+        )
+    return steps
+
+
+def _panic_safe(handler):
+    def wrapper(*args, **kwargs):
+        try:
+            return handler(*args, **kwargs)
+        except HTTPException as exc:
+            return JSONResponse(status_code=exc.status_code, content=exc.detail)
+        except DoctorError as exc:
+            logger.exception("DoctorError during request")
+            report = exc.report
+            return JSONResponse(
+                status_code=500,
+                content={
+                    "error": str(exc),
+                    "detail": repr(exc),
+                    "traceback": traceback.format_exc(),
+                    "doctor": report,
+                    "next_steps": _next_steps_from_report(report),
+                },
+            )
+        except Exception as exc:
+            logger.exception("Unhandled error during request")
+            report = run_doctor(auto_fix=False)
+            return JSONResponse(
+                status_code=500,
+                content={
+                    "error": "Internal error while processing /api/songify",
+                    "detail": repr(exc),
+                    "traceback": traceback.format_exc(),
+                    "doctor": report,
+                    "next_steps": _next_steps_from_report(report),
+                },
+            )
+
+    return wrapper
+
+
 def load_songs() -> List[Dict[str, Any]]:
     with SONGS_CONFIG_PATH.open("r", encoding="utf-8") as file:
         return json.load(file)
@@ -106,12 +173,96 @@ def generate_in_song_ad(payload: GenerateRequest) -> GenerateResponse:
         lyrics_after=song["ad_context"]["after_lyrics"],
     )
 
-    audio_enabled = os.getenv("ENABLE_AUDIO_GENERATION", "true").strip().lower() == "true"
+    voice_path = generate_voice_clip(lyrics)
+    song_path = ORIGINALS_DIR / song["file"]
+    mixed_path = mix_song_with_insert(
+        song_id=song["song_id"],
+        song_path=song_path,
+        insert_path=voice_path,
+        start_ms=start_ms,
+        end_ms=end_ms,
+    )
+
+    audio_relative = mixed_path.relative_to(PUBLIC_DIR).as_posix()
+    return GenerateResponse(lyrics=lyrics, audio_url=f"/{audio_relative}")
+
+
+@router.post("/songify", response_model=SongifyResponse)
+@_panic_safe
+def songify(payload: SongifyRequest) -> SongifyResponse:
+    load_env()
+    if payload.style not in {"talk_sing", "chant", "rap"}:
+        raise HTTPException(status_code=400, detail="style must be talk_sing, chant, or rap")
+
+    logger.info("songify: doctor start")
+    doctor_report = run_doctor(auto_fix=True)
+    if not doctor_report.get("ok"):
+        raise DoctorError("Dependency check failed. See doctor report.", doctor_report)
+    logger.info("songify: doctor ok")
+
+    assert_ffmpeg_available()
+    GENERATED_DIR.mkdir(parents=True, exist_ok=True)
+
+    lines = [line.strip() for line in payload.lyrics.splitlines() if line.strip()]
+    if not lines:
+        raise HTTPException(status_code=400, detail="lyrics must contain at least one line")
+
+    try:
+        from pydub import AudioSegment
+    except Exception as exc:
+        raise RuntimeError(f"pydub import failed: {exc}") from exc
+
+    silence_gap = AudioSegment.silent(duration=120)
+    combined = AudioSegment.silent(duration=0)
+
+    for line in lines:
+        logger.info("songify: TTS line length=%s", len(line))
+        wav_path = Path(generate_voice(text=line))
+        clip = AudioSegment.from_wav(wav_path)
+        combined = combined + clip + silence_gap
+
+    job_id = uuid.uuid4().hex
+    raw_wav_path = GENERATED_DIR / f"{job_id}_raw.wav"
+    logger.info("songify: export raw wav=%s", raw_wav_path)
+    combined.export(raw_wav_path, format="wav")
+
+    songified_path = GENERATED_DIR / f"{job_id}_songified.wav"
+    logger.info("songify: songify start")
+    songify_tts_to_singing(
+        input_wav=raw_wav_path,
+        lyrics=payload.lyrics,
+        bpm=payload.bpm,
+        key=payload.key,
+        style=payload.style,
+        output_wav=songified_path,
+    )
+    logger.info("songify: songify done -> %s", songified_path)
+
+    raw_relative = raw_wav_path.relative_to(PUBLIC_DIR).as_posix()
+    songified_relative = songified_path.relative_to(PUBLIC_DIR).as_posix()
+    return SongifyResponse(
+        raw_tts_url=f"/{raw_relative}",
+        songified_url=f"/{songified_relative}",
+        meta={"bpm": payload.bpm, "key": payload.key, "style": payload.style},
+    )
+
+
+@router.get("/health/doctor")
+def health_doctor() -> Dict[str, Any]:
+    load_env()
+    report = run_doctor(auto_fix=False)
+    env_report = {
+        "GRADIUM_API_KEY": bool(get_env("GRADIUM_API_KEY")),
+        "GRADIUM_VOICE_ID": bool(get_env("GRADIUM_VOICE_ID") or get_env("VOICE_ID")),
+        "GRADIUM_REGION": bool(get_env("GRADIUM_REGION")),
+    }
+    return {"python_deps": report.get("python_deps"), "ffmpeg": report.get("ffmpeg"), "env": env_report}
+    audio_enabled = os.getenv("ENABLE_AUDIO_GENERATION", "false").lower() == "true"
     if not audio_enabled:
         return GenerateResponse(
             lyrics=lyrics,
             audio_url=None,
-            audio_error="Audio generation is disabled. Set ENABLE_AUDIO_GENERATION=true.",
+            audio_error="Unable to generate audio.",
         )
 
     try:
@@ -126,60 +277,9 @@ def generate_in_song_ad(payload: GenerateRequest) -> GenerateResponse:
         )
         audio_relative = mixed_path.relative_to(PUBLIC_DIR).as_posix()
         return GenerateResponse(lyrics=lyrics, audio_url=f"/{audio_relative}", audio_error=None)
-    except Exception as exc:
+    except Exception:
         return GenerateResponse(
             lyrics=lyrics,
             audio_url=None,
-            audio_error=f"Unable to generate audio. {exc}",
+            audio_error="Unable to generate audio.",
         )
-
-
-@router.post("/songify", response_model=SongifyResponse)
-def songify(payload: SongifyRequest) -> SongifyResponse:
-    if payload.style not in {"talk_sing", "chant", "rap"}:
-        raise HTTPException(status_code=400, detail="style must be talk_sing, chant, or rap")
-
-    assert_ffmpeg_available()
-    GENERATED_DIR.mkdir(parents=True, exist_ok=True)
-
-    lines = [line.strip() for line in payload.lyrics.splitlines() if line.strip()]
-    if not lines:
-        raise HTTPException(status_code=400, detail="lyrics must contain at least one line")
-
-    try:
-        from pydub import AudioSegment
-    except Exception as exc:
-        raise HTTPException(status_code=500, detail=f"pydub import failed: {exc}") from exc
-
-    silence_gap = AudioSegment.silent(duration=120)
-    combined = AudioSegment.silent(duration=0)
-
-    for line in lines:
-        try:
-            wav_path = Path(generate_voice(text=line))
-        except RuntimeError as exc:
-            raise HTTPException(status_code=500, detail=str(exc)) from exc
-        clip = AudioSegment.from_wav(wav_path)
-        combined = combined + clip + silence_gap
-
-    job_id = uuid.uuid4().hex
-    raw_wav_path = GENERATED_DIR / f"{job_id}_raw.wav"
-    combined.export(raw_wav_path, format="wav")
-
-    songified_path = GENERATED_DIR / f"{job_id}_songified.wav"
-    songify_tts_to_singing(
-        input_wav=raw_wav_path,
-        lyrics=payload.lyrics,
-        bpm=payload.bpm,
-        key=payload.key,
-        style=payload.style,
-        output_wav=songified_path,
-    )
-
-    raw_relative = raw_wav_path.relative_to(PUBLIC_DIR).as_posix()
-    songified_relative = songified_path.relative_to(PUBLIC_DIR).as_posix()
-    return SongifyResponse(
-        raw_tts_url=f"/{raw_relative}",
-        songified_url=f"/{songified_relative}",
-        meta={"bpm": payload.bpm, "key": payload.key, "style": payload.style},
-    )

@@ -9,6 +9,7 @@ from backend.utils.paths import env_path
 
 
 PLACEHOLDER = "PASTE_YOUR_KEY_HERE"
+ALT_PLACEHOLDER = "PASTE_NEW_KEY_HERE"
 
 
 def ensure_local_env_file() -> None:
@@ -38,11 +39,11 @@ def get_env(name: str, default: str | None = None, required: bool = False) -> Op
         value = default
     if value is not None:
         value = value.strip()
-    if required and (not value or value == PLACEHOLDER):
+    if required and (not value or value in {PLACEHOLDER, ALT_PLACEHOLDER}):
         raise RuntimeError(
             f"Missing {name}. Set it in .env at {env_path().resolve()} "
             "or in your deployment environment."
         )
-    if value == PLACEHOLDER:
+    if value in {PLACEHOLDER, ALT_PLACEHOLDER}:
         return None
     return value
