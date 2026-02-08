@@ -4,6 +4,8 @@ import uuid
 from pathlib import Path
 from typing import Tuple
 
+import logging
+
 import requests
 import soundfile as sf
 import librosa
@@ -15,6 +17,7 @@ from backend.utils.env import get_env, load_env
 
 DEFAULT_VOICE_ID = "zVI-68f2GRJbOGTT"
 DEFAULT_REGION = "us"
+logger = logging.getLogger("interlude.gradium")
 
 
 def _gradium_endpoint(region: str) -> str:
@@ -54,15 +57,30 @@ def generate_voice(text: str, energy: str = "high", pace: str = "medium") -> str
     _ = (energy, pace)
     api_key, voice_id, region = _get_env()
 
+    endpoint = _gradium_endpoint(region)
+    logger.info(
+        "Gradium TTS request: endpoint=%s voice_id=%s text_len=%s",
+        endpoint,
+        voice_id,
+        len(text),
+    )
     response = requests.post(
-        _gradium_endpoint(region),
+        endpoint,
         headers={"x-api-key": api_key},
         json={"text": text, "voice_id": voice_id},
         timeout=60,
     )
+    logger.info("Gradium TTS response: status=%s", response.status_code)
     if response.status_code >= 400:
+        preview = ""
+        try:
+            preview = response.text[:300]
+        except Exception:
+            preview = ""
+        logger.error("Gradium TTS error body (preview): %s", preview)
         raise RuntimeError(
-            f"Gradium TTS failed: {response.status_code} - {response.text[:400]}"
+            f"Gradium TTS failed: {response.status_code} {response.reason}. "
+            "Check region, key, voice_id."
         )
 
     GENERATED_DIR.mkdir(parents=True, exist_ok=True)
