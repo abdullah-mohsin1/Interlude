@@ -6,6 +6,9 @@ type InsertWindow = {
 export type Song = {
   song_id: string;
   title: string;
+  artist?: string;
+  cover_image?: string;
+  local_audio?: string;
   file: string;
   bpm: number;
   mood: string;
@@ -36,9 +39,17 @@ export default function Playlist({ songs, selectedSongId, onSelect }: PlaylistPr
               <span className="playlist-index">
                 {(index + 1).toString().padStart(2, "0")}
               </span>
-              <span>
+              {song.cover_image ? (
+                <img
+                  src={song.cover_image}
+                  alt={`${song.title} cover`}
+                  className="playlist-cover"
+                />
+              ) : null}
+              <span className="playlist-details">
                 <span className="playlist-title">{song.title}</span>
                 <span className="playlist-meta">
+                  {song.artist ? `${song.artist} · ` : ""}
                   {song.mood} · {song.bpm} BPM
                 </span>
               </span>

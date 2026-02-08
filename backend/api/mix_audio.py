@@ -12,7 +12,8 @@ def mix_song_with_insert(
     start_ms: int,
     end_ms: int,
 ) -> Path:
-    output_path = Path(GENERATED_DIR) / f"{song_id}_with_ad.wav"
+    suffix = song_path.suffix if song_path.suffix else ".wav"
+    output_path = Path(GENERATED_DIR) / f"{song_id}_with_ad{suffix}"
     return mix_audio(
         song_path=song_path,
         insert_path=insert_path,
@@ -20,4 +21,3 @@ def mix_song_with_insert(
         end_ms=end_ms,
         output_path=output_path,
     )
-

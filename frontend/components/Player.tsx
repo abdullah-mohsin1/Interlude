@@ -2,6 +2,8 @@ import { ChangeEvent, useEffect, useRef, useState } from "react";
 
 type PlayerProps = {
   title: string;
+  artist?: string;
+  coverImage?: string;
   sourceUrl: string;
   isModified: boolean;
 };
@@ -15,7 +17,7 @@ function formatTime(seconds: number): string {
   return `${mins}:${secs}`;
 }
 
-export default function Player({ title, sourceUrl, isModified }: PlayerProps) {
+export default function Player({ title, artist, coverImage, sourceUrl, isModified }: PlayerProps) {
   const audioRef = useRef<HTMLAudioElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [duration, setDuration] = useState(0);
@@ -78,9 +80,14 @@ export default function Player({ title, sourceUrl, isModified }: PlayerProps) {
       <p className="section-label">Now Playing</p>
 
       <div className="player-header">
-        <div>
+        <div className="player-now">
+          {coverImage ? (
+            <img src={coverImage} alt={`${title} cover`} className="player-art" />
+          ) : null}
+          <div>
           <h2 className="player-title">{title}</h2>
-          <p className="player-subtitle">Interlude Demo Session</p>
+          <p className="player-subtitle">{artist || "Interlude Demo Session"}</p>
+          </div>
         </div>
 
         <span className={`badge${isModified ? " modified" : ""}`}>

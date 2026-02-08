@@ -42,6 +42,8 @@ def ensure_song_assets(songs: Iterable[dict]) -> None:
         original_path = ORIGINALS_DIR / song["file"]
         if original_path.exists():
             continue
+        if original_path.suffix.lower() != ".wav":
+            continue
         insert_end_seconds = int(song["insert_window"]["end_ms"] / 1000)
         generate_silence_wav(original_path, duration_seconds=max(20, insert_end_seconds + 5))
 
@@ -64,6 +66,8 @@ def mix_audio(
     - Add crossfade and reverb matching
     """
     if not song_path.exists():
+        if song_path.suffix.lower() != ".wav":
+            raise FileNotFoundError(f"Missing source audio file: {song_path}")
         duration_seconds = max(20, int(end_ms / 1000) + 5)
         generate_silence_wav(song_path, duration_seconds)
 
@@ -73,4 +77,3 @@ def mix_audio(
     output_path.parent.mkdir(parents=True, exist_ok=True)
     shutil.copyfile(song_path, output_path)
     return output_path
-

@@ -6,6 +6,7 @@ import AdPrompt from "../components/AdPrompt";
 import Player from "../components/Player";
 import Playlist, { Song } from "../components/Playlist";
 import Toggle from "../components/Toggle";
+import { DEFAULT_SONGS, fetchConnectedSongs } from "../lib/defaultSongs";
 
 type GenerateResponse = {
   lyrics: string;
@@ -15,8 +16,11 @@ type GenerateResponse = {
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000";
 
 export default function CreatePage() {
-  const [songs, setSongs] = useState<Song[]>([]);
-  const [selectedSongId, setSelectedSongId] = useState<string | null>(null);
+  const [songs, setSongs] = useState<Song[]>(DEFAULT_SONGS);
+  const [selectedSongId, setSelectedSongId] = useState<string | null>(
+    DEFAULT_SONGS[0]?.song_id || null
+  );
+  const [usingFallbackSongs, setUsingFallbackSongs] = useState(true);
   const [mode, setMode] = useState<"original" | "modified">("original");
   const [generatedBySong, setGeneratedBySong] = useState<Record<string, string>>({});
   const [generatedLyrics, setGeneratedLyrics] = useState<string>("");
@@ -26,17 +30,25 @@ export default function CreatePage() {
   useEffect(() => {
     const loadSongs = async () => {
       try {
-        const response = await fetch(`${API_BASE_URL}/api/songs`);
-        if (!response.ok) {
-          throw new Error(`Failed to load songs: ${response.status}`);
-        }
-        const data: Song[] = await response.json();
-        setSongs(data);
-        if (data.length > 0) {
-          setSelectedSongId(data[0].song_id);
-        }
+        const connectedSongs = await fetchConnectedSongs(API_BASE_URL);
+        setSongs(connectedSongs);
+        setUsingFallbackSongs(false);
+        setSelectedSongId((currentSongId) => {
+          if (currentSongId && connectedSongs.some((song) => song.song_id === currentSongId)) {
+            return currentSongId;
+          }
+          return connectedSongs.length > 0 ? connectedSongs[0].song_id : null;
+        });
+        setError(null);
       } catch (err) {
-        setError(err instanceof Error ? err.message : "Unknown error");
+        setSongs(DEFAULT_SONGS);
+        setUsingFallbackSongs(true);
+        setSelectedSongId((currentSongId) => currentSongId || DEFAULT_SONGS[0]?.song_id || null);
+        setError(
+          err instanceof Error
+            ? `${err.message}. Using local song list.`
+            : "Using local song list."
+        );
       }
     };
 
@@ -55,8 +67,11 @@ export default function CreatePage() {
     if (mode === "modified" && modifiedReady && selectedSongId) {
       return `${API_BASE_URL}${generatedBySong[selectedSongId]}`;
     }
+    if (usingFallbackSongs && selectedSong.local_audio) {
+      return selectedSong.local_audio;
+    }
     return `${API_BASE_URL}/audio/originals/${selectedSong.file}`;
-  }, [generatedBySong, mode, modifiedReady, selectedSong, selectedSongId]);
+  }, [generatedBySong, mode, modifiedReady, selectedSong, selectedSongId, usingFallbackSongs]);
 
   const onSelectSong = (songId: string) => {
     setSelectedSongId(songId);
@@ -67,6 +82,10 @@ export default function CreatePage() {
 
   const onGenerate = async (prompt: string) => {
     if (!selectedSongId) return;
+    if (usingFallbackSongs) {
+      setError("Backend is unreachable. Start backend on http://localhost:8000 to generate ads.");
+      return;
+    }
     setLoading(true);
     setError(null);
 
@@ -226,6 +245,8 @@ export default function CreatePage() {
                 <div>
                   <Player
                     title={selectedSong?.title || "No song selected"}
+                    artist={selectedSong?.artist}
+                    coverImage={selectedSong?.cover_image}
                     sourceUrl={sourceUrl}
                     isModified={mode === "modified" && modifiedReady}
                   />

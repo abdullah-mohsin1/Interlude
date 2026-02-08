@@ -1,25 +1,67 @@
 [
   {
     "song_id": "song_1",
-    "title": "Campus Nights",
-    "file": "song1.wav",
-    "bpm": 120,
-    "mood": "upbeat pop",
+    "title": "Love Yourself",
+    "artist": "Justin Bieber",
+    "cover_image": "/images/love-yourself.jpeg",
+    "file": "love_yourself.mp3",
+    "bpm": 100,
+    "mood": "acoustic pop",
     "insert_window": {
-      "start_ms": 55000,
-      "end_ms": 63000
+      "start_ms": 47000,
+      "end_ms": 55000
     }
   },
   {
     "song_id": "song_2",
-    "title": "Late Study Drive",
-    "file": "song2.wav",
-    "bpm": 98,
-    "mood": "chill hip-hop",
+    "title": "Blinding Lights",
+    "artist": "The Weeknd",
+    "cover_image": "https://i.scdn.co/image/ab67616d0000b273f63d0f44d2f9bca1dc8f6d5f",
+    "file": "blinding_lights.wav",
+    "bpm": 171,
+    "mood": "synth-pop",
+    "insert_window": {
+      "start_ms": 36000,
+      "end_ms": 44000
+    }
+  },
+  {
+    "song_id": "song_3",
+    "title": "Levitating",
+    "artist": "Dua Lipa",
+    "cover_image": "https://i.scdn.co/image/ab67616d0000b273d4daf28d55fe4197ede848be",
+    "file": "levitating.wav",
+    "bpm": 103,
+    "mood": "dance-pop",
+    "insert_window": {
+      "start_ms": 52000,
+      "end_ms": 60000
+    }
+  },
+  {
+    "song_id": "song_4",
+    "title": "Sunflower",
+    "artist": "Post Malone, Swae Lee",
+    "cover_image": "https://i.scdn.co/image/ab67616d0000b2731c959d50f1f9f7ad2f6f7f8a",
+    "file": "sunflower.wav",
+    "bpm": 90,
+    "mood": "melodic hip-hop",
     "insert_window": {
       "start_ms": 42000,
       "end_ms": 50000
     }
+  },
+  {
+    "song_id": "song_5",
+    "title": "STAY",
+    "artist": "The Kid LAROI, Justin Bieber",
+    "cover_image": "https://i.scdn.co/image/ab67616d0000b273f8f5f7db89f72f6f35d57f56",
+    "file": "stay.wav",
+    "bpm": 170,
+    "mood": "pop",
+    "insert_window": {
+      "start_ms": 30000,
+      "end_ms": 38000
+    }
   }
 ]
-

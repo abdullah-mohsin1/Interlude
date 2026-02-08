@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import json
-from functools import lru_cache
 from pathlib import Path
 from typing import Any, Dict, List
 
@@ -28,6 +27,8 @@ class InsertWindow(BaseModel):
 class Song(BaseModel):
     song_id: str
     title: str
+    artist: str | None = None
+    cover_image: str | None = None
     file: str
     bpm: int
     mood: str
@@ -44,7 +45,6 @@ class GenerateResponse(BaseModel):
     audio_url: str
 
 
-@lru_cache(maxsize=1)
 def load_songs() -> List[Dict[str, Any]]:
     with SONGS_CONFIG_PATH.open("r", encoding="utf-8") as file:
         return json.load(file)
@@ -89,4 +89,3 @@ def generate_in_song_ad(payload: GenerateRequest) -> GenerateResponse:
 
     audio_relative = mixed_path.relative_to(PUBLIC_DIR).as_posix()
     return GenerateResponse(lyrics=lyrics, audio_url=f"/{audio_relative}")
-

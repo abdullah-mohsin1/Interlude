@@ -320,6 +320,18 @@
   color: #ffffff;
 }
 
+.playlist-cover {
+  width: 42px;
+  height: 42px;
+  border-radius: 6px;
+  object-fit: cover;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.playlist-details {
+  min-width: 0;
+}
+
 .playlist-meta {
   margin-top: 4px;
   font-size: 11px;
@@ -488,6 +500,20 @@
   gap: 12px;
   flex-wrap: wrap;
   margin-top: 12px;
+}
+
+.player-now {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.player-art {
+  width: 52px;
+  height: 52px;
+  border-radius: 8px;
+  object-fit: cover;
+  border: 1px solid rgba(255, 255, 255, 0.12);
 }
 
 .player-title {
@@ -684,6 +710,29 @@
   padding: 1rem;
   margin-left: 1.5rem;
   margin-top: 1rem;
+  border: 1px solid transparent;
+  text-align: left;
+  color: #ffffff;
+  font-family: inherit;
+  transition: all 0.2s ease;
+}
+
+.home-layout .card.playable {
+  cursor: pointer;
+}
+
+.home-layout .card.playable:hover {
+  background-color: #2a2a2a;
+  border-color: rgba(255, 255, 255, 0.16);
+}
+
+.home-layout .card.active {
+  border-color: rgba(29, 185, 84, 0.65);
+  box-shadow: 0 0 0 1px rgba(29, 185, 84, 0.45);
+}
+
+.home-layout .card.disabled {
+  opacity: 0.7;
 }
 
 .home-layout .card-img {
@@ -697,6 +746,18 @@
 .home-layout .card-info {
   font-size: 0.85rem;
   opacity: 0.8;
+}
+
+.home-layout .card-badge {
+  margin-top: 0.7rem;
+  display: inline-block;
+  background: rgba(29, 185, 84, 0.18);
+  color: #1bd760;
+  border-radius: 999px;
+  padding: 4px 8px;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
 }
 
 .home-layout h2 {
@@ -723,15 +784,46 @@
   left: 245px;
   right: 0;
   bottom: 0;
-  height: 72px;
+  min-height: 84px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0 1rem;
+  padding: 0.65rem 1rem;
 }
 
 .home-layout .album {
   width: 25%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.home-layout .album-art {
+  width: 52px;
+  height: 52px;
+  border-radius: 8px;
+  object-fit: cover;
+}
+
+.home-layout .album-meta {
+  min-width: 0;
+}
+
+.home-layout .album-title {
+  font-size: 0.86rem;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.home-layout .album-artist {
+  margin-top: 3px;
+  font-size: 0.75rem;
+  color: #b3b3b3;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .home-layout .player {
@@ -746,23 +838,35 @@
   display: flex;
   justify-content: center;
   align-items: center;
+  margin-bottom: 8px;
 }
 
-.home-layout .player-control-icon {
-  height: 1rem;
-  margin-right: 1.75rem;
-  opacity: 0.7;
-  filter: invert(1);
+.home-layout .player-control-btn {
+  border: 0;
+  border-radius: 999px;
+  background-color: #1bd760;
+  color: #000000;
+  font-weight: 700;
+  font-size: 0.85rem;
+  min-width: 96px;
+  padding: 8px 14px;
+  cursor: pointer;
 }
 
-.home-layout .player-control-icon:hover {
-  opacity: 1;
+.home-layout .player-control-btn:hover {
+  background-color: #21cc5d;
+}
+
+.home-layout .player-control-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
 }
 
 .home-layout .playback-bar {
   display: flex;
   justify-content: center;
   align-items: center;
+  gap: 8px;
 }
 
 .home-layout .progress-bar {
@@ -770,6 +874,10 @@
   appearance: none;
   background-color: transparent;
   cursor: pointer;
+}
+
+.home-layout .progress-bar:disabled {
+  cursor: not-allowed;
 }
 
 .home-layout .progress-bar::-webkit-slider-runnable-track {
@@ -785,6 +893,14 @@
   background-color: #1bd760;
   border-radius: 50%;
   margin-top: -6px;
+}
+
+.home-layout .curr-time,
+.home-layout .tot-time {
+  font-size: 0.72rem;
+  color: #b3b3b3;
+  font-family: "IBM Plex Mono", monospace;
+  min-width: 36px;
 }
 
 @media (max-width: 1000px) {
