@@ -106,18 +106,32 @@ def generate_in_song_ad(payload: GenerateRequest) -> GenerateResponse:
         lyrics_after=song["ad_context"]["after_lyrics"],
     )
 
-    voice_path = generate_voice_clip(lyrics)
-    song_path = ORIGINALS_DIR / song["file"]
-    mixed_path = mix_song_with_insert(
-        song_id=song["song_id"],
-        song_path=song_path,
-        insert_path=voice_path,
-        start_ms=start_ms,
-        end_ms=end_ms,
-    )
+    audio_enabled = os.getenv("ENABLE_AUDIO_GENERATION", "true").strip().lower() == "true"
+    if not audio_enabled:
+        return GenerateResponse(
+            lyrics=lyrics,
+            audio_url=None,
+            audio_error="Audio generation is disabled. Set ENABLE_AUDIO_GENERATION=true.",
+        )
 
-    audio_relative = mixed_path.relative_to(PUBLIC_DIR).as_posix()
-    return GenerateResponse(lyrics=lyrics, audio_url=f"/{audio_relative}")
+    try:
+        voice_path = generate_voice_clip(lyrics)
+        song_path = ORIGINALS_DIR / song["file"]
+        mixed_path = mix_song_with_insert(
+            song_id=song["song_id"],
+            song_path=song_path,
+            insert_path=voice_path,
+            start_ms=start_ms,
+            end_ms=end_ms,
+        )
+        audio_relative = mixed_path.relative_to(PUBLIC_DIR).as_posix()
+        return GenerateResponse(lyrics=lyrics, audio_url=f"/{audio_relative}", audio_error=None)
+    except Exception as exc:
+        return GenerateResponse(
+            lyrics=lyrics,
+            audio_url=None,
+            audio_error=f"Unable to generate audio. {exc}",
+        )
 
 
 @router.post("/songify", response_model=SongifyResponse)
@@ -169,29 +183,3 @@ def songify(payload: SongifyRequest) -> SongifyResponse:
         songified_url=f"/{songified_relative}",
         meta={"bpm": payload.bpm, "key": payload.key, "style": payload.style},
     )
-    audio_enabled = os.getenv("ENABLE_AUDIO_GENERATION", "false").lower() == "true"
-    if not audio_enabled:
-        return GenerateResponse(
-            lyrics=lyrics,
-            audio_url=None,
-            audio_error="Unable to generate audio.",
-        )
-
-    try:
-        voice_path = generate_voice_clip(lyrics)
-        song_path = ORIGINALS_DIR / song["file"]
-        mixed_path = mix_song_with_insert(
-            song_id=song["song_id"],
-            song_path=song_path,
-            insert_path=voice_path,
-            start_ms=start_ms,
-            end_ms=end_ms,
-        )
-        audio_relative = mixed_path.relative_to(PUBLIC_DIR).as_posix()
-        return GenerateResponse(lyrics=lyrics, audio_url=f"/{audio_relative}", audio_error=None)
-    except Exception:
-        return GenerateResponse(
-            lyrics=lyrics,
-            audio_url=None,
-            audio_error="Unable to generate audio.",
-        )
