@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import uuid
 import os
 from pathlib import Path
 from typing import Any, Dict, List
@@ -11,7 +12,10 @@ from pydantic import BaseModel, Field
 from backend.api.generate_ad import generate_lyrics_for_song
 from backend.api.generate_voice import generate_voice_clip
 from backend.api.mix_audio import mix_song_with_insert
-from backend.services.audio_service import ORIGINALS_DIR
+from backend.services.audio_service import GENERATED_DIR, ORIGINALS_DIR
+from backend.services.gradium_service import generate_voice
+from backend.services.songify_service import songify_tts_to_singing
+from backend.utils.ffmpeg import assert_ffmpeg_available
 
 ROOT_DIR = Path(__file__).resolve().parents[2]
 SONGS_CONFIG_PATH = ROOT_DIR / "backend" / "config" / "songs.json"
@@ -53,6 +57,19 @@ class GenerateResponse(BaseModel):
     audio_error: str | None = None
 
 
+class SongifyRequest(BaseModel):
+    lyrics: str = Field(..., min_length=3)
+    bpm: int = Field(120, ge=40, le=240)
+    key: str = Field("C_minor")
+    style: str = Field("talk_sing")
+
+
+class SongifyResponse(BaseModel):
+    raw_tts_url: str
+    songified_url: str
+    meta: Dict[str, Any]
+
+
 def load_songs() -> List[Dict[str, Any]]:
     with SONGS_CONFIG_PATH.open("r", encoding="utf-8") as file:
         return json.load(file)
@@ -89,6 +106,69 @@ def generate_in_song_ad(payload: GenerateRequest) -> GenerateResponse:
         lyrics_after=song["ad_context"]["after_lyrics"],
     )
 
+    voice_path = generate_voice_clip(lyrics)
+    song_path = ORIGINALS_DIR / song["file"]
+    mixed_path = mix_song_with_insert(
+        song_id=song["song_id"],
+        song_path=song_path,
+        insert_path=voice_path,
+        start_ms=start_ms,
+        end_ms=end_ms,
+    )
+
+    audio_relative = mixed_path.relative_to(PUBLIC_DIR).as_posix()
+    return GenerateResponse(lyrics=lyrics, audio_url=f"/{audio_relative}")
+
+
+@router.post("/songify", response_model=SongifyResponse)
+def songify(payload: SongifyRequest) -> SongifyResponse:
+    if payload.style not in {"talk_sing", "chant", "rap"}:
+        raise HTTPException(status_code=400, detail="style must be talk_sing, chant, or rap")
+
+    assert_ffmpeg_available()
+    GENERATED_DIR.mkdir(parents=True, exist_ok=True)
+
+    lines = [line.strip() for line in payload.lyrics.splitlines() if line.strip()]
+    if not lines:
+        raise HTTPException(status_code=400, detail="lyrics must contain at least one line")
+
+    try:
+        from pydub import AudioSegment
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"pydub import failed: {exc}") from exc
+
+    silence_gap = AudioSegment.silent(duration=120)
+    combined = AudioSegment.silent(duration=0)
+
+    for line in lines:
+        try:
+            wav_path = Path(generate_voice(text=line))
+        except RuntimeError as exc:
+            raise HTTPException(status_code=500, detail=str(exc)) from exc
+        clip = AudioSegment.from_wav(wav_path)
+        combined = combined + clip + silence_gap
+
+    job_id = uuid.uuid4().hex
+    raw_wav_path = GENERATED_DIR / f"{job_id}_raw.wav"
+    combined.export(raw_wav_path, format="wav")
+
+    songified_path = GENERATED_DIR / f"{job_id}_songified.wav"
+    songify_tts_to_singing(
+        input_wav=raw_wav_path,
+        lyrics=payload.lyrics,
+        bpm=payload.bpm,
+        key=payload.key,
+        style=payload.style,
+        output_wav=songified_path,
+    )
+
+    raw_relative = raw_wav_path.relative_to(PUBLIC_DIR).as_posix()
+    songified_relative = songified_path.relative_to(PUBLIC_DIR).as_posix()
+    return SongifyResponse(
+        raw_tts_url=f"/{raw_relative}",
+        songified_url=f"/{songified_relative}",
+        meta={"bpm": payload.bpm, "key": payload.key, "style": payload.style},
+    )
     audio_enabled = os.getenv("ENABLE_AUDIO_GENERATION", "false").lower() == "true"
     if not audio_enabled:
         return GenerateResponse(

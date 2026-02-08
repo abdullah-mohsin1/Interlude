@@ -5,9 +5,11 @@ from pathlib import Path
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-
 from backend.api.routes import load_songs, router
 from backend.services.audio_service import ensure_song_assets
+from backend.utils.env import load_env
+
+load_env()
 
 ROOT_DIR = Path(__file__).resolve().parents[1]
 AUDIO_DIR = ROOT_DIR / "public" / "audio"
@@ -38,4 +40,3 @@ def on_startup() -> None:
 @app.get("/health")
 def health() -> dict:
     return {"status": "ok", "project": "Interlude"}
-
