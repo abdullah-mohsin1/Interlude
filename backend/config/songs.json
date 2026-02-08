@@ -1,0 +1,25 @@
+[
+  {
+    "song_id": "song_1",
+    "title": "Campus Nights",
+    "file": "song1.wav",
+    "bpm": 120,
+    "mood": "upbeat pop",
+    "insert_window": {
+      "start_ms": 55000,
+      "end_ms": 63000
+    }
+  },
+  {
+    "song_id": "song_2",
+    "title": "Late Study Drive",
+    "file": "song2.wav",
+    "bpm": 98,
+    "mood": "chill hip-hop",
+    "insert_window": {
+      "start_ms": 42000,
+      "end_ms": 50000
+    }
+  }
+]
+
