@@ -74,31 +74,25 @@ export default function Player({ title, sourceUrl, isModified }: PlayerProps) {
   const progress = duration > 0 ? (currentTime / duration) * 100 : 0;
 
   return (
-    <section className="surface-card p-5">
+    <section className="panel">
       <p className="section-label">Now Playing</p>
 
-      <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
+      <div className="player-header">
         <div>
-          <h2 className="max-w-[28ch] truncate text-lg font-bold text-white">{title}</h2>
-          <p className="mt-1 text-xs font-medium text-spotify-muted">Interlude Demo Session</p>
+          <h2 className="player-title">{title}</h2>
+          <p className="player-subtitle">Interlude Demo Session</p>
         </div>
 
-        <span
-          className={`rounded-full border px-3 py-1 text-xs font-semibold ${
-            isModified
-              ? "border-spotify-accent/50 bg-spotify-accent/15 text-spotify-accent"
-              : "border-white/15 bg-white/5 text-zinc-300"
-          }`}
-        >
+        <span className={`badge${isModified ? " modified" : ""}`}>
           {isModified ? "Modified Mix" : "Original Mix"}
         </span>
       </div>
 
       <audio ref={audioRef} src={sourceUrl} preload="metadata" />
 
-      <div className="mt-6 flex items-center gap-4">
+      <div className="player-controls">
         <button
-          className="inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-spotify-accent text-lg text-zinc-950 transition hover:scale-105 hover:bg-[#22ca5d]"
+          className="play-button"
           onClick={togglePlayback}
           aria-label={isPlaying ? "Pause" : "Play"}
         >
@@ -115,9 +109,9 @@ export default function Player({ title, sourceUrl, isModified }: PlayerProps) {
             onChange={onSeek}
             aria-label="Track progress"
           />
-          <div className="mt-2 flex items-center justify-between text-[11px] text-spotify-muted">
-            <span className="font-mono">{formatTime(currentTime)}</span>
-            <span className="font-mono">{formatTime(duration)}</span>
+          <div className="time-row">
+            <span>{formatTime(currentTime)}</span>
+            <span>{formatTime(duration)}</span>
           </div>
         </div>
       </div>

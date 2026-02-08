@@ -102,69 +102,150 @@ export default function HomePage() {
           name="description"
           content="Interlude AI demo: in-song AI ads that blend into creator tracks."
         />
+        <script
+          src="https://kit.fontawesome.com/23cecef777.js"
+          crossOrigin="anonymous"
+        ></script>
       </Head>
 
-      <main className="mx-auto min-h-screen w-full max-w-[1400px] p-4 md:p-6">
-        <div className="grid gap-4 lg:grid-cols-[320px_1fr]">
-          <aside className="space-y-4">
-            <section className="surface-card p-5">
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-spotify-accent">
-                Interlude AI
-              </p>
-              <h1 className="mt-3 text-2xl font-extrabold leading-tight text-white">
-                Ads that live inside the music
-              </h1>
-              <p className="mt-3 text-sm leading-relaxed text-spotify-muted">
+      <main>
+        <div className="sidebar">
+          <div className="logo">
+            Interlude <span>AI</span>
+          </div>
+
+          <div className="navigation">
+            <ul>
+              <li>
+                <a href="#">
+                  <span className="fa fa-home"></span>
+                  <span>Home</span>
+                </a>
+              </li>
+              <li>
+                <a href="#">
+                  <span className="fa fa-search"></span>
+                  <span>Explore</span>
+                </a>
+              </li>
+              <li>
+                <a href="#">
+                  <span className="fa fas fa-book"></span>
+                  <span>Library</span>
+                </a>
+              </li>
+            </ul>
+          </div>
+
+          <div className="navigation">
+            <ul>
+              <li>
+                <a href="#">
+                  <span className="fa fas fa-plus-square"></span>
+                  <span>Create Playlist</span>
+                </a>
+              </li>
+              <li>
+                <a href="#">
+                  <span className="fa fas fa-heart"></span>
+                  <span>Liked Songs</span>
+                </a>
+              </li>
+            </ul>
+          </div>
+
+          <div className="policies">
+            <ul>
+              <li>
+                <a href="#">Cookies</a>
+              </li>
+              <li>
+                <a href="#">Privacy</a>
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <div className="main-container">
+          <div className="topbar">
+            <div className="prev-next-buttons">
+              <button type="button" className="fa fas fa-chevron-left"></button>
+              <button type="button" className="fa fas fa-chevron-right"></button>
+            </div>
+
+            <div className="navbar">
+              <ul>
+                <li>
+                  <a href="#">Premium</a>
+                </li>
+                <li>
+                  <a href="#">Support</a>
+                </li>
+                <li>
+                  <a href="#">Download</a>
+                </li>
+                <li className="divider">|</li>
+                <li>
+                  <a href="#">Sign Up</a>
+                </li>
+              </ul>
+              <button type="button">Log In</button>
+            </div>
+          </div>
+
+          <div className="content">
+            <section className="hero-card">
+              <p className="section-label">Interlude AI</p>
+              <h1>Ads that live inside the music</h1>
+              <p>
                 Build voice-matched ad moments that feel native to the track. Select a song,
                 generate a segment, and switch between original and injected versions instantly.
               </p>
             </section>
 
-            <Playlist songs={songs} selectedSongId={selectedSongId} onSelect={onSelectSong} />
-          </aside>
+            <section className="section">
+              <h2>Studio</h2>
+              <div className="grid-split">
+                <div>
+                  <Playlist
+                    songs={songs}
+                    selectedSongId={selectedSongId}
+                    onSelect={onSelectSong}
+                  />
+                  <Toggle mode={mode} modifiedReady={modifiedReady} onChange={setMode} />
+                  <AdPrompt onGenerate={onGenerate} loading={loading} />
+                </div>
 
-          <section className="space-y-4">
-            <section className="surface-card relative overflow-hidden p-6">
-              <div className="pointer-events-none absolute -top-24 right-[-50px] h-56 w-56 rounded-full bg-spotify-accent/25 blur-3xl" />
-              <div className="relative z-10">
-                <p className="section-label">Studio</p>
-                <h2 className="mt-2 text-3xl font-extrabold text-white md:text-4xl">
-                  Generate in-song placements in one click
-                </h2>
-                <p className="mt-3 max-w-2xl text-sm text-spotify-muted md:text-base">
-                  Interlude composes short rhythmic ad lyrics, voices them in the creator style,
-                  and prepares a modified mix for playback.
-                </p>
+                <div>
+                  <Player
+                    title={selectedSong?.title || "No song selected"}
+                    sourceUrl={sourceUrl}
+                    isModified={mode === "modified" && modifiedReady}
+                  />
+
+                  <section className="panel">
+                    <p className="section-label">Generated Lyrics</p>
+                    <div className="lyrics-box">
+                      {generatedLyrics || "Generate an ad to see rhythmic lyric output."}
+                    </div>
+                    {error ? (
+                      <p className="error-text">{error}</p>
+                    ) : null}
+                  </section>
+                </div>
               </div>
             </section>
+          </div>
 
-            <div className="grid gap-4 xl:grid-cols-[360px_1fr]">
-              <div className="space-y-4">
-                <Toggle mode={mode} modifiedReady={modifiedReady} onChange={setMode} />
-                <AdPrompt onGenerate={onGenerate} loading={loading} />
-              </div>
-
-              <div className="space-y-4">
-                <Player
-                  title={selectedSong?.title || "No song selected"}
-                  sourceUrl={sourceUrl}
-                  isModified={mode === "modified" && modifiedReady}
-                />
-
-                <section className="surface-card p-5">
-                  <p className="section-label">Generated Lyrics</p>
-                  <pre className="mt-3 min-h-36 whitespace-pre-wrap rounded-xl border border-white/10 bg-zinc-950/70 p-4 font-mono text-sm leading-relaxed text-zinc-200">
-                    {generatedLyrics || "Generate an ad to see rhythmic lyric output."}
-                  </pre>
-                  {error ? (
-                    <p className="mt-3 rounded-lg border border-red-300/20 bg-red-400/10 px-3 py-2 text-sm text-red-300">
-                      {error}
-                    </p>
-                  ) : null}
-                </section>
-              </div>
+          <div className="preview">
+            <div className="text">
+              <h6>Preview of Interlude</h6>
+              <p>Generate in-song ad moments with occasional demos. No credit card needed.</p>
             </div>
-          </section>
+            <div className="button">
+              <button type="button">Sign up free</button>
+            </div>
+          </div>
         </div>
       </main>
     </>
