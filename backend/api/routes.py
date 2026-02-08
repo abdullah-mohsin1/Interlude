@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import uuid
+import os
 from pathlib import Path
 from typing import Any, Dict, List
 
@@ -28,6 +29,11 @@ class InsertWindow(BaseModel):
     end_ms: int
 
 
+class AdContext(BaseModel):
+    before_lyrics: str
+    after_lyrics: str
+
+
 class Song(BaseModel):
     song_id: str
     title: str
@@ -37,6 +43,7 @@ class Song(BaseModel):
     bpm: int
     mood: str
     insert_window: InsertWindow
+    ad_context: AdContext
 
 
 class GenerateRequest(BaseModel):
@@ -46,7 +53,8 @@ class GenerateRequest(BaseModel):
 
 class GenerateResponse(BaseModel):
     lyrics: str
-    audio_url: str
+    audio_url: str | None = None
+    audio_error: str | None = None
 
 
 class SongifyRequest(BaseModel):
@@ -88,10 +96,14 @@ def generate_in_song_ad(payload: GenerateRequest) -> GenerateResponse:
     max_duration_seconds = (end_ms - start_ms) / 1000.0
 
     lyrics = generate_lyrics_for_song(
+        title=song["title"],
+        artist=song.get("artist"),
         mood=song["mood"],
         bpm=song["bpm"],
         ad_prompt=payload.ad_prompt,
         max_duration_seconds=max_duration_seconds,
+        lyrics_before=song["ad_context"]["before_lyrics"],
+        lyrics_after=song["ad_context"]["after_lyrics"],
     )
 
     voice_path = generate_voice_clip(lyrics)
@@ -157,3 +169,29 @@ def songify(payload: SongifyRequest) -> SongifyResponse:
         songified_url=f"/{songified_relative}",
         meta={"bpm": payload.bpm, "key": payload.key, "style": payload.style},
     )
+    audio_enabled = os.getenv("ENABLE_AUDIO_GENERATION", "false").lower() == "true"
+    if not audio_enabled:
+        return GenerateResponse(
+            lyrics=lyrics,
+            audio_url=None,
+            audio_error="Unable to generate audio.",
+        )
+
+    try:
+        voice_path = generate_voice_clip(lyrics)
+        song_path = ORIGINALS_DIR / song["file"]
+        mixed_path = mix_song_with_insert(
+            song_id=song["song_id"],
+            song_path=song_path,
+            insert_path=voice_path,
+            start_ms=start_ms,
+            end_ms=end_ms,
+        )
+        audio_relative = mixed_path.relative_to(PUBLIC_DIR).as_posix()
+        return GenerateResponse(lyrics=lyrics, audio_url=f"/{audio_relative}", audio_error=None)
+    except Exception:
+        return GenerateResponse(
+            lyrics=lyrics,
+            audio_url=None,
+            audio_error="Unable to generate audio.",
+        )

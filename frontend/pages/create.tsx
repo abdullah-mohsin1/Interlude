@@ -10,7 +10,8 @@ import { DEFAULT_SONGS, fetchConnectedSongs } from "../lib/defaultSongs";
 
 type GenerateResponse = {
   lyrics: string;
-  audio_url: string;
+  audio_url: string | null;
+  audio_error?: string | null;
 };
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000";
@@ -105,8 +106,14 @@ export default function CreatePage() {
 
       const data: GenerateResponse = await response.json();
       setGeneratedLyrics(data.lyrics);
-      setGeneratedBySong((prev) => ({ ...prev, [selectedSongId]: data.audio_url }));
-      setMode("modified");
+      const generatedAudioUrl = data.audio_url;
+      if (generatedAudioUrl) {
+        setGeneratedBySong((prev) => ({ ...prev, [selectedSongId]: generatedAudioUrl }));
+        setMode("modified");
+      } else {
+        setMode("original");
+        setError(data.audio_error || "Unable to generate audio.");
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unknown error");
     } finally {
@@ -263,15 +270,6 @@ export default function CreatePage() {
             </section>
           </div>
 
-          <div className="preview">
-            <div className="text">
-              <h6>Preview of Interlude</h6>
-              <p>Generate in-song ad moments with occasional demos. No credit card needed.</p>
-            </div>
-            <div className="button">
-              <button type="button">Sign up free</button>
-            </div>
-          </div>
         </div>
       </main>
     </>
