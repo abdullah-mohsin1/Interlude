@@ -1,98 +1,15 @@
 import Head from "next/head";
-import { useEffect, useMemo, useState } from "react";
-
-import AdPrompt from "../components/AdPrompt";
-import Player from "../components/Player";
-import Playlist, { Song } from "../components/Playlist";
-import Toggle from "../components/Toggle";
-
-type GenerateResponse = {
-  lyrics: string;
-  audio_url: string;
-};
-
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000";
+import Link from "next/link";
 
 export default function HomePage() {
-  const [songs, setSongs] = useState<Song[]>([]);
-  const [selectedSongId, setSelectedSongId] = useState<string | null>(null);
-  const [mode, setMode] = useState<"original" | "modified">("original");
-  const [generatedBySong, setGeneratedBySong] = useState<Record<string, string>>({});
-  const [generatedLyrics, setGeneratedLyrics] = useState<string>("");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    const loadSongs = async () => {
-      try {
-        const response = await fetch(`${API_BASE_URL}/api/songs`);
-        if (!response.ok) {
-          throw new Error(`Failed to load songs: ${response.status}`);
-        }
-        const data: Song[] = await response.json();
-        setSongs(data);
-        if (data.length > 0) {
-          setSelectedSongId(data[0].song_id);
-        }
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "Unknown error");
-      }
-    };
-
-    void loadSongs();
-  }, []);
-
-  const selectedSong = useMemo(
-    () => songs.find((song) => song.song_id === selectedSongId) || null,
-    [songs, selectedSongId]
-  );
-
-  const modifiedReady = Boolean(selectedSongId && generatedBySong[selectedSongId]);
-
-  const sourceUrl = useMemo(() => {
-    if (!selectedSong) return "";
-    if (mode === "modified" && modifiedReady && selectedSongId) {
-      return `${API_BASE_URL}${generatedBySong[selectedSongId]}`;
-    }
-    return `${API_BASE_URL}/audio/originals/${selectedSong.file}`;
-  }, [generatedBySong, mode, modifiedReady, selectedSong, selectedSongId]);
-
-  const onSelectSong = (songId: string) => {
-    setSelectedSongId(songId);
-    setGeneratedLyrics("");
-    setMode("original");
-    setError(null);
-  };
-
-  const onGenerate = async (prompt: string) => {
-    if (!selectedSongId) return;
-    setLoading(true);
-    setError(null);
-
-    try {
-      const response = await fetch(`${API_BASE_URL}/api/generate`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          song_id: selectedSongId,
-          ad_prompt: prompt
-        })
-      });
-
-      if (!response.ok) {
-        throw new Error(`Generate failed: ${response.status}`);
-      }
-
-      const data: GenerateResponse = await response.json();
-      setGeneratedLyrics(data.lyrics);
-      setGeneratedBySong((prev) => ({ ...prev, [selectedSongId]: data.audio_url }));
-      setMode("modified");
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Unknown error");
-    } finally {
-      setLoading(false);
-    }
-  };
+  const cardCovers = [
+    "https://i.scdn.co/image/ab67616d0000b273a3c5882b3f0f5a0bdfc3c4a4",
+    "https://i.scdn.co/image/ab67616d0000b273c0b2c9e4d5f1f28a1d4a10cd",
+    "https://i.scdn.co/image/ab67616d0000b2732a3d2d16983b62f8c6f1c6b6",
+    "https://i.scdn.co/image/ab67616d0000b273a13a5e3c4be2e6f0c0f4c1b5",
+    "https://i.scdn.co/image/ab67616d0000b273b3e09c1d92c45fb6c77d1ad8",
+    "https://i.scdn.co/image/ab67616d0000b2730f9c4a7f2c4cc7e2db7a2a1f"
+  ];
 
   return (
     <>
@@ -100,7 +17,7 @@ export default function HomePage() {
         <title>Interlude AI</title>
         <meta
           name="description"
-          content="Interlude AI demo: in-song AI ads that blend into creator tracks."
+          content="Interlude AI home: Spotify-inspired library layout."
         />
         <script
           src="https://kit.fontawesome.com/23cecef777.js"
@@ -117,10 +34,16 @@ export default function HomePage() {
           <div className="navigation">
             <ul>
               <li>
-                <a href="#">
+                <Link href="/">
                   <span className="fa fa-home"></span>
                   <span>Home</span>
-                </a>
+                </Link>
+              </li>
+              <li>
+                <Link href="/create">
+                  <span className="fa fa-plus-square"></span>
+                  <span>Create</span>
+                </Link>
               </li>
               <li>
                 <a href="#">
@@ -167,83 +90,104 @@ export default function HomePage() {
         </div>
 
         <div className="main-container">
-          <div className="topbar">
-            <div className="prev-next-buttons">
-              <button type="button" className="fa fas fa-chevron-left"></button>
-              <button type="button" className="fa fas fa-chevron-right"></button>
-            </div>
-
-            <div className="navbar">
-              <ul>
-                <li>
-                  <a href="#">Premium</a>
-                </li>
-                <li>
-                  <a href="#">Support</a>
-                </li>
-                <li>
-                  <a href="#">Download</a>
-                </li>
-                <li className="divider">|</li>
-                <li>
-                  <a href="#">Sign Up</a>
-                </li>
-              </ul>
-              <button type="button">Log In</button>
-            </div>
-          </div>
-
-          <div className="content">
-            <section className="hero-card">
-              <p className="section-label">Interlude AI</p>
-              <h1>Ads that live inside the music</h1>
-              <p>
-                Build voice-matched ad moments that feel native to the track. Select a song,
-                generate a segment, and switch between original and injected versions instantly.
-              </p>
-            </section>
-
-            <section className="section">
-              <h2>Studio</h2>
-              <div className="grid-split">
-                <div>
-                  <Playlist
-                    songs={songs}
-                    selectedSongId={selectedSongId}
-                    onSelect={onSelectSong}
+          <div className="home-layout">
+            <div className="home-content">
+              <div className="sticky-nav">
+                <div className="nav-icons">
+                  <img
+                    src="https://cdn-icons-png.flaticon.com/512/271/271220.png"
+                    alt="Back"
                   />
-                  <Toggle mode={mode} modifiedReady={modifiedReady} onChange={setMode} />
-                  <AdPrompt onGenerate={onGenerate} loading={loading} />
+                  <img
+                    src="https://cdn-icons-png.flaticon.com/512/271/271228.png"
+                    alt="Forward"
+                    className="hide"
+                  />
                 </div>
-
-                <div>
-                  <Player
-                    title={selectedSong?.title || "No song selected"}
-                    sourceUrl={sourceUrl}
-                    isModified={mode === "modified" && modifiedReady}
-                  />
-
-                  <section className="panel">
-                    <p className="section-label">Generated Lyrics</p>
-                    <div className="lyrics-box">
-                      {generatedLyrics || "Generate an ad to see rhythmic lyric output."}
-                    </div>
-                    {error ? (
-                      <p className="error-text">{error}</p>
-                    ) : null}
-                  </section>
+                <div className="sticky-nav-options">
+                  <button className="badge nav-item hide">Explore Premium</button>
+                  <button className="badge nav-item dark-badge">
+                    <i className="fa-regular fa-circle-down" style={{ marginRight: 5 }}></i>
+                    Install App
+                  </button>
+                  <i className="fa-regular fa-user nav-item"></i>
                 </div>
               </div>
-            </section>
-          </div>
 
-          <div className="preview">
-            <div className="text">
-              <h6>Preview of Interlude</h6>
-              <p>Generate in-song ad moments with occasional demos. No credit card needed.</p>
+              <h2>Recently Played</h2>
+              <div className="cards-container">
+                <div className="card">
+                  <img src={cardCovers[0]} className="card-img" alt="Card cover" />
+                  <p className="card-title">Top 50 - Global</p>
+                  <p className="card-info">Your daily updates of the most played ...</p>
+                </div>
+              </div>
+
+              <h2>Trending now near you</h2>
+              <div className="cards-container">
+                {cardCovers.slice(1, 6).map((cover, index) => (
+                  <div className="card" key={`trend-${index}`}>
+                    <img src={cover} className="card-img" alt="Card cover" />
+                    <p className="card-title">Top 50 - Global</p>
+                    <p className="card-info">Your daily updates of the most played ...</p>
+                  </div>
+                ))}
+              </div>
+
+              <h2>Featured Charts</h2>
+              <div className="cards-container">
+                {cardCovers.slice(0, 3).map((cover, index) => (
+                  <div className="card" key={`feat-${index}`}>
+                    <img src={cover} className="card-img" alt="Card cover" />
+                    <p className="card-title">Top 50 - Global</p>
+                    <p className="card-info">Your daily updates of the most played ...</p>
+                  </div>
+                ))}
+              </div>
+
+              <div className="footer">
+                <div className="line"></div>
+              </div>
             </div>
-            <div className="button">
-              <button type="button">Sign up free</button>
+
+            <div className="music-player">
+              <div className="album"></div>
+              <div className="player">
+                <div className="player-controls">
+                  <img
+                    src="https://cdn-icons-png.flaticon.com/512/271/271220.png"
+                    className="player-control-icon"
+                    alt="Prev"
+                  />
+                  <img
+                    src="https://cdn-icons-png.flaticon.com/512/271/271218.png"
+                    className="player-control-icon"
+                    alt="Pause"
+                  />
+                  <img
+                    src="https://cdn-icons-png.flaticon.com/512/727/727245.png"
+                    className="player-control-icon"
+                    alt="Play"
+                    style={{ opacity: 1, height: "2rem" }}
+                  />
+                  <img
+                    src="https://cdn-icons-png.flaticon.com/512/271/271228.png"
+                    className="player-control-icon"
+                    alt="Next"
+                  />
+                  <img
+                    src="https://cdn-icons-png.flaticon.com/512/860/860828.png"
+                    className="player-control-icon"
+                    alt="Queue"
+                  />
+                </div>
+                <div className="playback-bar">
+                  <span className="curr-time">00:00</span>
+                  <input type="range" min="0" max="100" className="progress-bar" step={1} />
+                  <span className="tot-time">03:50</span>
+                </div>
+              </div>
+              <div className="controls"></div>
             </div>
           </div>
         </div>

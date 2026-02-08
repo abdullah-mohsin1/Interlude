@@ -619,3 +619,180 @@
   border: 2px solid #f4fff7;
   box-shadow: 0 0 0 4px rgba(29, 185, 84, 0.2);
 }
+
+/* Home page (Spotify library layout) - right panel only */
+.home-layout {
+  background-color: #121212;
+  border-radius: 1rem;
+  overflow: hidden;
+  position: relative;
+  min-height: 100vh;
+}
+
+.home-layout * {
+  color: #fff;
+}
+
+.home-content {
+  overflow: auto;
+  padding: 0 1.5rem 120px;
+}
+
+.home-layout a {
+  text-decoration: none;
+  color: #fff;
+}
+
+.home-layout .sticky-nav {
+  position: sticky;
+  top: 0;
+  background-color: #121212;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 0;
+  z-index: 10;
+}
+
+.home-layout .sticky-nav .nav-icons img {
+  height: 1.25rem;
+  width: 1.25rem;
+  margin-right: 0.75rem;
+  filter: invert(1);
+  opacity: 0.8;
+}
+
+.home-layout .sticky-nav-options {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.home-layout .nav-item {
+  margin-right: 1rem;
+}
+
+.home-layout .cards-container {
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.home-layout .card {
+  background-color: #232323;
+  width: 150px;
+  border-radius: 0.5rem;
+  padding: 1rem;
+  margin-left: 1.5rem;
+  margin-top: 1rem;
+}
+
+.home-layout .card-img {
+  width: 100%;
+}
+
+.home-layout .card-title {
+  font-weight: 600;
+}
+
+.home-layout .card-info {
+  font-size: 0.85rem;
+  opacity: 0.8;
+}
+
+.home-layout h2 {
+  padding: 0.5rem;
+}
+
+.home-layout .footer {
+  height: 200px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.home-layout .line {
+  width: 90%;
+  height: 30%;
+  border-top: 1px solid white;
+  opacity: 0.4;
+}
+
+.home-layout .music-player {
+  background-color: #000;
+  position: fixed;
+  left: 245px;
+  right: 0;
+  bottom: 0;
+  height: 72px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 1rem;
+}
+
+.home-layout .album {
+  width: 25%;
+}
+
+.home-layout .player {
+  width: 50%;
+}
+
+.home-layout .controls {
+  width: 25%;
+}
+
+.home-layout .player-controls {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.home-layout .player-control-icon {
+  height: 1rem;
+  margin-right: 1.75rem;
+  opacity: 0.7;
+  filter: invert(1);
+}
+
+.home-layout .player-control-icon:hover {
+  opacity: 1;
+}
+
+.home-layout .playback-bar {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.home-layout .progress-bar {
+  width: 70%;
+  appearance: none;
+  background-color: transparent;
+  cursor: pointer;
+}
+
+.home-layout .progress-bar::-webkit-slider-runnable-track {
+  background-color: #ddd;
+  border-radius: 100px;
+  height: 0.2rem;
+}
+
+.home-layout .progress-bar::-webkit-slider-thumb {
+  appearance: none;
+  height: 1rem;
+  width: 1rem;
+  background-color: #1bd760;
+  border-radius: 50%;
+  margin-top: -6px;
+}
+
+@media (max-width: 1000px) {
+  .home-layout .hide {
+    display: none;
+  }
+
+  .home-layout .music-player {
+    left: 0;
+  }
+}
