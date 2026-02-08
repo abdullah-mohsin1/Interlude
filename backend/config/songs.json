@@ -10,6 +10,10 @@
     "insert_window": {
       "start_ms": 47000,
       "end_ms": 55000
+    },
+    "ad_context": {
+      "before_lyrics": "[Verse 1]\\nFor all the times that you rained on my parade\\nAnd all the clubs you get in using my name\\nYou think you broke my heart, oh girl, for goodness' sake\\nYou think I'm cryin' on my own, well, I ain't\\n\\n[Refrain]\\nAnd I didn't wanna write a song\\n'Cause I didn't want anyone thinking I still care\\nI don't, but you still hit my phone up\\nAnd baby, I'll be movin' on\\nAnd I think you should be somethin' I don't wanna hold back\\nMaybe you should know that\\n\\n[Pre-Chorus]\\nMy mama don't like you and she likes everyone\\nAnd I never like to admit that I was wrong\\nAnd I've been so caught up in my job, didn't see what's going on\\nBut now I know, I'm better sleeping on my own\\n\\n[Chorus]\\n'Cause if you like the way you look that much\\nOh baby, you should go and love yourself\\nAnd if you think that I'm still holdin' on to somethin'\\nYou should go and love yourself.",
+      "after_lyrics": "[Verse 2]\\nBut when you told me that you hated my friends\\nThe only problem was with you and not them\\nAnd every time you told me my opinion was wrong\\nAnd tried to make me forget where I came from\\n\\n[Refrain]\\nAnd I didn't wanna write a song\\n'Cause I didn't want anyone thinking I still care\\nI don't, but you still hit my phone up\\nAnd baby, I'll be movin' on\\nAnd I think you should be somethin' I don't wanna hold back\\nMaybe you should know that\\n\\n[Pre-Chorus]\\nMy mama don't like you and she likes everyone\\nAnd I never like to admit that I was wrong\\nAnd I've been so caught up in my job, didn't see what's going on\\nBut now I know, I'm better sleeping on my own\\n\\n[Chorus]\\n'Cause if you like the way you look that much\\nOh baby, you should go and love yourself\\nAnd if you think that I'm still holdin' on to somethin'\\nYou should go and love yourself\\n\\n[Verse 3]\\nFor all the times that you made me feel small\\nI fell in love, now I feel nothin' at all\\nI never felt so low and I was vulnerable\\nWas I a fool to let you break down my walls?\\n\\n[Chorus]\\n'Cause if you like the way you look that much\\nOh baby, you should go and love yourself\\nAnd if you think that I'm still holdin' on to somethin'\\nYou should go and love yourself\\n'Cause if you like the way you look that much\\nOh baby, you should go and love yourself\\nAnd if you think that I'm still holdin' on to somethin'\\nYou should go and love yourself"
     }
   },
   {
@@ -23,6 +27,10 @@
     "insert_window": {
       "start_ms": 36000,
       "end_ms": 44000
+    },
+    "ad_context": {
+      "before_lyrics": "[Context Pending]\\nProvide the exact lyrics that come before the fixed ad slot for Blinding Lights.",
+      "after_lyrics": "[Context Pending]\\nProvide the exact lyrics that come after the fixed ad slot for Blinding Lights."
     }
   },
   {
@@ -36,6 +44,10 @@
     "insert_window": {
       "start_ms": 52000,
       "end_ms": 60000
+    },
+    "ad_context": {
+      "before_lyrics": "[Context Pending]\\nProvide the exact lyrics that come before the fixed ad slot for Levitating.",
+      "after_lyrics": "[Context Pending]\\nProvide the exact lyrics that come after the fixed ad slot for Levitating."
     }
   },
   {
@@ -49,6 +61,10 @@
     "insert_window": {
       "start_ms": 42000,
       "end_ms": 50000
+    },
+    "ad_context": {
+      "before_lyrics": "[Context Pending]\\nProvide the exact lyrics that come before the fixed ad slot for Sunflower.",
+      "after_lyrics": "[Context Pending]\\nProvide the exact lyrics that come after the fixed ad slot for Sunflower."
     }
   },
   {
@@ -62,6 +78,10 @@
     "insert_window": {
       "start_ms": 30000,
       "end_ms": 38000
+    },
+    "ad_context": {
+      "before_lyrics": "[Context Pending]\\nProvide the exact lyrics that come before the fixed ad slot for STAY.",
+      "after_lyrics": "[Context Pending]\\nProvide the exact lyrics that come after the fixed ad slot for STAY."
     }
   }
 ]
